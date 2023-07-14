@@ -37,7 +37,7 @@ python script.py <RSS.xml URL> <subdirectory> [OPTIONS]
 
 ### Options
 - `-l`, `--limit`: The maximum number of URLs to process from the RSS feed. Processes the first `<limit>` links.
-- `p`, `--parent_class`: The class name of the parent element within which you want to search for links.
+- `-p`, `--parent_class`: The class name of the parent element within which you want to search for links.
 
 Example:
 
