@@ -1,6 +1,8 @@
-# Nested Page Link Extractor
+# Internal Link Extractor
 
-The Nested Page Link Extractor is a Python script that extracts links from nested pages within a specified subdirectory of a website. It takes a RSS feed URL as input, retrieves the URLs listed in the feed, and then processes each URL to find all the links within the specified subdirectory.
+The Internal Link Extractor is a Python script that extracts links from nested pages within a specified subdirectory of a website. It takes a RSS feed URL as input, retrieves the URLs listed in the feed, and then processes each URL to find all the links within the specified subdirectory.
+
+This is useful, for example, if you want to map your internal linking between blog posts.
 
 The script generates a matrix that represents the relationship between the processed URLs. The matrix is stored as a CSV file where each row and column corresponds to a URL, and an 'X' is placed in the matrix if a link exists between the URLs.
 
@@ -43,10 +45,10 @@ Example:
 python script.py https://example.com/rss.xml /blog -limit 10 -parent_class article-container
 ```
 
-The script will retrieve the first 10 URLs from the specified RSS feed, process each URL to find the links within the "/blog" subdirectory, and generate a matrix of the link relationships.
+The script will retrieve the first 10 URLs from the specified RSS feed, process each URL to find the links within the `/blog` subdirectory, and generate a matrix of the link relationships.
 
 ## Output
-The matrix will be saved as a CSV file named "matrix.csv" in the current directory.
+The matrix will be saved as a CSV file named `matrix.csv` in the current directory.
 
 ## License & Copyright
 
