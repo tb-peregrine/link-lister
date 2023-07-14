@@ -1,5 +1,6 @@
 import sys
 import requests
+import csv
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, urldefrag
 
@@ -69,12 +70,30 @@ if __name__ == '__main__':
 
         nested_pages = process_pages(urls, subdirectory, rss_url)
 
-        for page, linked_urls in nested_pages.items():
-            print(f"Page: {page}")
-            print("Linked URLs:")
-            for linked_url in linked_urls:
-                print(linked_url)
-            print()
+        # Create a list of all unique URLs
+        all_urls = set(urls)
+        for linked_urls in nested_pages.values():
+            all_urls.update(linked_urls)
+
+        # Create the matrix
+        matrix = []
+        for row_url in all_urls:
+            row = []
+            for col_url in all_urls:
+                if col_url in nested_pages.get(row_url, []):
+                    row.append("X")
+                else:
+                    row.append("")
+            matrix.append(row)
+
+        # Write the matrix to a CSV file
+        with open("matrix.csv", "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([""] + list(all_urls))  # Write column labels
+            for row_url, row in zip(all_urls, matrix):
+                writer.writerow([row_url] + row)
+
+        print("Matrix saved as matrix.csv")
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while processing the RSS feed: {e}")
