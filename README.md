@@ -1,8 +1,8 @@
-# Internal Link Extractor
+# The Link Lister
 
-The Internal Link Extractor is a Python script that extracts links from nested pages within a specified subdirectory of a website. It takes a RSS feed URL as input, retrieves the URLs listed in the feed, and then processes each URL to find all the links within the specified subdirectory.
+The Link Lister is a Python utility that extracts links from nested pages within a specified subdirectory of a website. It takes a RSS feed URL as input, retrieves the URLs listed in the feed, and then processes each URL to find all the links within the specified subdirectory.
 
-This is useful, for example, if you want to map your internal linking between blog posts.
+This is useful, for example, if you want to map internal linking between blog posts.
 
 The script generates a matrix that represents the relationship between the processed URLs. The matrix is stored as a CSV file where each row and column corresponds to a URL, and an 'X' is placed in the matrix if a link exists between the URLs.
 
