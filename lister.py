@@ -1,8 +1,36 @@
 import click
+from pprint import pprint
+import re
 import requests
 import csv
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, urldefrag
+
+
+def search_keyword(urls, parent_class, keyword):
+    print(f'Searching content for keyword "{keyword}"')
+    
+    # Create a dictionary to store URLs with the number of exact matches
+    matching_urls = {}
+
+    for url in urls:
+        # Send a GET request to the page
+        response = requests.get(url)
+        response.raise_for_status()
+
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find the parent elements with the specified class
+        parent_elements = soup.find_all(class_=parent_class)
+
+        for parent_element in parent_elements:
+            matches = parent_element.find_all(string=re.compile(keyword))
+            # print(f'Found {len(matches)} matches of keyword "{keyword}" in {url}')
+            if len(matches) > 0:
+                matching_urls[url] = len(matches)
+
+    return matching_urls
 
 
 def process_pages(urls, subdirectory, rss, parent_class):
@@ -15,10 +43,40 @@ def process_pages(urls, subdirectory, rss, parent_class):
     return nested_pages
 
 
-def process_page(url, subdirectory, rss, parent_class):
-    # Create a set to store the visited pages
-    visited_pages = set()
+def get_urls_from_rss(rss_url, match=None, limit=-1):
+    try:
+        if limit > 0:
+            print(f'Processing first {limit} piece(s) of content in {rss_url}...')
+        else: print(f'Processing all content in {rss_url}...')
 
+        # Send a GET request to the RSS feed
+        response = requests.get(rss_url)
+        response.raise_for_status()
+
+        # Parse the XML content
+        soup = BeautifulSoup(response.text, 'xml')
+
+        # Find all the URLs in the RSS feed that match (if passed)
+        items = soup.find_all('item')
+
+        # Create an empty array to store the URLs that match the conditions
+        urls = []
+        
+        # Find all links that contain matches
+        for item in items:
+            link = item.find('link').text.strip()
+            title = item.find('title').text.strip()
+
+            # Check if the match string is in the link or title
+            if match.lower() in link.lower() or match.lower() in title.lower():
+                urls.append(link)
+
+        return urls[:limit]
+    
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while processing the RSS feed: {e}")
+
+def process_page(url, subdirectory, rss, parent_class):
     try:
         print(f'Processing {url}...', end=" ")
         # Send a GET request to the page
@@ -60,22 +118,15 @@ def process_page(url, subdirectory, rss, parent_class):
 @click.argument('subdirectory')
 @click.option('-l', '--limit', type=int, default='-1', help="Analyze the first <limit> URLs in the RSS feed")
 @click.option('-p', '--parent_class', default='blogpost-content', help="Search only for content nested underneath a parent element with <parent_class>")
-def main(rss_url, subdirectory, limit, parent_class):
-    try:
-        if limit >= 0:
-            print(f'Processing first {limit} pieces of content in {rss_url}...')
-        else: print(f'Processing all content in {rss_url}...')
+@click.option('-m', '--match', help="Find only URLs that match.")
+@click.option('-k', '--keyword', help="Search content from URLs in the RSS feed for a keyword and return a list of URLs containing the keyword exactly.")
+def main(rss_url, subdirectory, limit, parent_class, match, keyword):
+    urls = get_urls_from_rss(rss_url, match, limit)
 
-        # Send a GET request to the RSS feed
-        response = requests.get(rss_url)
-        response.raise_for_status()
-
-        # Parse the XML content
-        soup = BeautifulSoup(response.text, 'xml')
-
-        # Find all the URLs in the RSS feed
-        urls = [item.link.text for item in soup.find_all('item')[:limit]]  # Limit the number of URLs using the slicing operator
-
+    if keyword is not None:
+        matching_urls = search_keyword(urls, parent_class, keyword)
+        pprint(matching_urls)
+    else:    
         nested_pages = process_pages(urls, subdirectory, rss_url, parent_class)
 
         # Create a list of all unique URLs
@@ -103,9 +154,6 @@ def main(rss_url, subdirectory, limit, parent_class):
                 writer.writerow([row_url] + row)
 
         print("Matrix saved as matrix.csv")
-
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred while processing the RSS feed: {e}")
 
 if __name__ == '__main__':
     main()
