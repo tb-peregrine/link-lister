@@ -15,8 +15,11 @@ def search_keyword(urls, parent_class, keyword):
 
     for url in urls:
         # Send a GET request to the page
-        response = requests.get(url)
-        response.raise_for_status()
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except:
+            print(f"Could not access {url} due to a {response.status_code} error.")
 
         # Parse the HTML content
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -61,14 +64,17 @@ def get_urls_from_rss(rss_url, match=None, limit=-1):
 
         # Create an empty array to store the URLs that match the conditions
         urls = []
-        
-        # Find all links that contain matches
-        for item in items:
+        for item in items:     
             link = item.find('link').text.strip()
             title = item.find('title').text.strip()
 
             # Check if the match string is in the link or title
-            if match.lower() in link.lower() or match.lower() in title.lower():
+            if match:
+                if match.lower() in link.lower() or match.lower() in title.lower():
+                    urls.append(link)
+                else:
+                    pass
+            else:
                 urls.append(link)
 
         return urls[:limit]
@@ -120,10 +126,21 @@ def process_page(url, subdirectory, rss, parent_class):
 @click.option('-p', '--parent_class', default='blogpost-content', help="Search only for content nested underneath a parent element with <parent_class>")
 @click.option('-m', '--match', help="Find only URLs that match.")
 @click.option('-k', '--keyword', help="Search content from URLs in the RSS feed for a keyword and return a list of URLs containing the keyword exactly.")
-def main(rss_url, subdirectory, limit, parent_class, match, keyword):
+@click.option('-e', '--just_list_em', is_flag=True, help="Just list all the blogs on the RSS feed, subject to the match and limit otpions")
+def main(rss_url, subdirectory, limit, parent_class, match, keyword, just_list_em):
     urls = get_urls_from_rss(rss_url, match, limit)
+    if just_list_em:
+        try:
+            slugs = [url.split('tinybird.co')[1] for url in urls]
+        except:
+            slugs = urls
+        pprint(slugs)
+        elements= '\n'.join(slugs)
+        pyperclip.copy(elements)
+        print("List copied to clipboard")
+        return
 
-    if keyword is not None:
+    if keyword:
         matching_urls = search_keyword(urls, parent_class, keyword)
         pprint(matching_urls)
     else:    
